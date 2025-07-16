@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bolga Sherigu SHS - Prefectorial Elections</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/6.2.3/docx.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #2c3e50;
+      padding: 20px 0;
+      text-align: center;
+      color: white;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    nav {
+      background-color: #34495e;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 0;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    nav button:hover {
+      background-color: #2c3e50;
+      border-radius: 6px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    .category {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 0;
+      border-bottom: 1px solid #ddd;
+      flex-wrap: wrap;
+    }
+
+    .category strong {
+      width: 100%;
+      margin-bottom: 8px;
+      color: #2c3e50;
+    }
+
+    .category label {
+      margin-right: 20px;
+      font-weight: 500;
+    }
+
+    .controls {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .controls button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .controls button:hover {
+      background: #2980b9;
+    }
+
+    canvas {
+      max-width: 600px;
+      margin: 20px auto;
+      display: block;
+    }
+
+    .winner {
+      font-weight: bold;
+      color: #27ae60;
+    }
+
+    ul { list-style: none; padding-left: 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Bolga Sherigu SHS - Prefectorial Elections</h1>
+</header>
+
+<nav>
+  <button onclick="showTab('voteTab')">🗳️ Vote</button>
+  <button onclick="promptPassword()">📊 Results</button>
+</nav>
+
+<div class="container">
+  <div id="voteTab" class="tab active">
+    <form id="votingForm"></form>
+    <div class="controls">
+      <button onclick="submitVotes()">Submit Vote</button>
+    </div>
+  </div>
+
+  <div id="resultsTab" class="tab">
+    <div class="controls">
+      <button onclick="resetVotes()">🔄 Reset Votes</button>
+      <button onclick="exportCSV()">📁 Export CSV</button>
+      <button onclick="exportPDF()">📄 Export PDF</button>
+      <button onclick="exportWord()">📝 Export Word</button>
+    </div>
+    <div id="resultsDisplay"></div>
+  </div>
+</div>
+
+<script>
+  const categories = {
+    "SENIOR SCHOOL PREFECT": ["SELINA AKUMPIIMAH", "PROSPERA NSOH"],
+    "OFFICE & LAB PREFECT": ["ANGELINA ATIAH", "BETTY ATAMBIRE"],
+    "BOYS HOUSE PREFECT": ["BLESSING ASOYIRE", "LAMBERT ADUKO"],
+    "PREPS PREFECT": ["FREDA ATINSIA", "MARTHA AKAMBOE"],
+    "SANITATION PREFECT": ["MOHAAMED SUNGSUMA SHAWKIYA", "MATILDA AMOLE"],
+    "SPORTS & HEALTH PREFECT": ["VICTORIA AYAMGA", "ADUKO DORCAS"],
+    "DINING HALL PREFECT": ["VERA ASIGRE", "NO"],
+    "ENTERTAINMENT PREFECT": ["ATIAH VIVIAN", "ABEL AYAMBILA"]
+  };
+
+  let votes = JSON.parse(localStorage.getItem("electionVotes")) || {};
+  let charts = [];
+
+  function generateForm() {
+    const form = document.getElementById("votingForm");
+    form.innerHTML = "";
+    for (const [position, candidates] of Object.entries(categories)) {
+      const div = document.createElement("div");
+      div.classList.add("category");
+      let html = `<strong>${position}</strong>`;
+      candidates.forEach(candidate => {
+        html += `<label><input type='radio' name='${position}' value='${candidate}' required>${candidate}</label>`;
+      });
+      div.innerHTML = html;
+      form.appendChild(div);
+    }
+  }
+
+  function submitVotes() {
+    const form = document.getElementById("votingForm");
+    const formData = new FormData(form);
+    for (let [position, candidate] of formData.entries()) {
+      if (!votes[position]) votes[position] = {};
+      if (!votes[position][candidate]) votes[position][candidate] = 0;
+      votes[position][candidate]++;
+    }
+    localStorage.setItem("electionVotes", JSON.stringify(votes));
+    alert("✅ Vote submitted successfully!");
+    form.reset();
+  }
+
+  function showTab(id) {
+    document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    if (id === 'resultsTab') showResults();
+  }
+
+  function promptPassword() {
+    const password = prompt("Enter admin password to view results:");
+    if (password === "admin123") {
+      showTab('resultsTab');
+    } else {
+      alert("❌ Incorrect password.");
+    }
+  }
+
+  function showResults() {
+    const container = document.getElementById("resultsDisplay");
+    container.innerHTML = "";
+    charts.forEach(chart => chart.destroy());
+    charts = [];
+
+    for (const [position, candidateVotes] of Object.entries(votes)) {
+      const totalVotes = Object.values(candidateVotes).reduce((a, b) => a + b, 0);
+      const resultBlock = document.createElement("div");
+      resultBlock.innerHTML = `<h3>${position}</h3><ul>`;
+      let winner = "";
+      let maxVotes = 0;
+      const labels = [], data = [];
+
+      for (const [candidate, count] of Object.entries(candidateVotes)) {
+        const percent = ((count / totalVotes) * 100).toFixed(1);
+        resultBlock.innerHTML += `<li>${candidate}: ${count} votes (${percent}%)</li>`;
+        if (count > maxVotes) {
+          maxVotes = count;
+          winner = candidate;
+        }
+        labels.push(candidate);
+        data.push(count);
+      }
+
+      resultBlock.innerHTML += `</ul><div class='winner'>🏆 Winner: ${winner}</div>`;
+      const canvas = document.createElement("canvas");
+      resultBlock.appendChild(canvas);
+      container.appendChild(resultBlock);
+
+      charts.push(new Chart(canvas.getContext("2d"), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Votes',
+            data,
+            backgroundColor: '#3498db'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      }));
+    }
+  }
+
+  function resetVotes() {
+    if (confirm("Are you sure you want to reset all votes?")) {
+      votes = {};
+      localStorage.removeItem("electionVotes");
+      showResults();
+    }
+  }
+
+  function exportCSV() {
+    let csv = "Portfolio,Candidate,Votes\n";
+    for (const [pos, candidates] of Object.entries(votes)) {
+      for (const [cand, count] of Object.entries(candidates)) {
+        csv += `${pos},${cand},${count}\n`;
+      }
+    }
+    const blob = new Blob([csv], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "election_results.csv";
+    link.click();
+  }
+
+  function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text("Prefectorial Election Results", 20, 20);
+    let y = 30;
+    for (const [pos, candidates] of Object.entries(votes)) {
+      doc.text(pos, 20, y);
+      y += 8;
+      for (const [cand, count] of Object.entries(candidates)) {
+        doc.text(`- ${cand}: ${count} votes`, 30, y);
+        y += 8;
+      }
+      y += 4;
+    }
+    doc.save("election_results.pdf");
+  }
+
+  function exportWord() {
+    const doc = new window.docx.Document();
+    const children = [
+      new window.docx.Paragraph({ text: "Prefectorial Election Results", heading: window.docx.HeadingLevel.HEADING_1 })
+    ];
+    for (const [pos, candidates] of Object.entries(votes)) {
+      children.push(new window.docx.Paragraph({ text: pos, heading: window.docx.HeadingLevel.HEADING_2 }));
+      for (const [cand, count] of Object.entries(candidates)) {
+        children.push(new window.docx.Paragraph(`- ${cand}: ${count} votes`));
+      }
+    }
+    doc.addSection({ children });
+    window.docx.Packer.toBlob(doc).then(blob => {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "election_results.docx";
+      link.click();
+    });
+  }
+
+  generateForm();
+</script>
+</body>
+</html>
