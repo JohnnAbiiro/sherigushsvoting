@@ -95,7 +95,7 @@
       width: 120px;
       height: 120px;
       border-radius: 50%;
-      object-fit: cover;
+      object-fit: contain;
       border: 2px solid #ccc;
     }
 
@@ -214,7 +214,7 @@
         html += `
           <label>
             <input type="radio" name="${position}" value="${candidate}" required />
-            <div class="candidate-card">
+            <div class="candidate-card" >
               <img src="${imgSrc}" onerror="this.src='https://via.placeholder.com/120'" alt="${candidate}" />
               <div class="candidate-name">${candidate}</div>
             </div>
