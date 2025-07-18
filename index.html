@@ -20,8 +20,6 @@
       text-align: center;
       color: white;
     }
-    header h1 { margin: 0; font-size: 28px; }
-
     nav {
       background-color: #34495e;
       display: flex;
@@ -29,7 +27,6 @@
       gap: 10px;
       padding: 10px 0;
     }
-
     nav button {
       background: none;
       border: none;
@@ -39,12 +36,10 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-
     nav button:hover {
       background-color: #2c3e50;
       border-radius: 6px;
     }
-
     .container {
       max-width: 1000px;
       margin: 30px auto;
@@ -53,34 +48,28 @@
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
     .tab { display: none; }
     .tab.active { display: block; }
-
-.category {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 25px 0;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
-}
-
+    .category {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 25px 0;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
     .category strong {
       display: block;
       margin-bottom: 15px;
       font-size: 18px;
       color: #2c3e50;
     }
-
-.candidate-list {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-
+    .candidate-list {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
     .candidate-card {
       cursor: pointer;
       text-align: center;
@@ -90,7 +79,6 @@
       transition: 0.3s;
       width: 140px;
     }
-
     .candidate-card img {
       width: 120px;
       height: 120px;
@@ -98,30 +86,24 @@
       object-fit: contain;
       border: 2px solid #ccc;
     }
-
     .candidate-card:hover {
       border-color: #2980b9;
     }
-
     .candidate-name {
       margin-top: 10px;
       font-weight: 600;
     }
-
     input[type="radio"] {
       display: none;
     }
-
     input[type="radio"]:checked + .candidate-card {
       border-color: #3498db;
       background: #ecf6ff;
     }
-
     .controls {
       text-align: center;
       margin-top: 30px;
     }
-
     .controls button {
       background: #3498db;
       color: white;
@@ -132,22 +114,18 @@
       cursor: pointer;
       font-size: 14px;
     }
-
     .controls button:hover {
       background: #2980b9;
     }
-
     canvas {
       max-width: 600px;
       margin: 20px auto;
       display: block;
     }
-
     .winner {
       font-weight: bold;
       color: #27ae60;
     }
-
     ul { list-style: none; padding-left: 0; }
   </style>
 </head>
@@ -159,7 +137,9 @@
 
 <nav>
   <button onclick="showTab('voteTab')">🗳️ Vote</button>
+  <button onclick="showTab('houseVoteTab')">🏠 House Prefects Vote</button>
   <button onclick="promptPassword()">📊 Results</button>
+  <button onclick="promptHousePassword()">🏡 House Prefects Results</button>
 </nav>
 
 <div class="container">
@@ -170,14 +150,25 @@
     </div>
   </div>
 
+  <div id="houseVoteTab" class="tab">
+    <form id="houseVotingForm"></form>
+    <div class="controls">
+      <button type="button" onclick="submitHouseVotes()">✅ Submit Vote</button>
+    </div>
+  </div>
+
   <div id="resultsTab" class="tab">
     <div class="controls">
       <button onclick="resetVotes()">🔄 Reset Votes</button>
-      <button onclick="exportCSV()">📁 Export CSV</button>
-      <button onclick="exportPDF()">📄 Export PDF</button>
-      <button onclick="exportWord()">📝 Export Word</button>
     </div>
     <div id="resultsDisplay"></div>
+  </div>
+
+  <div id="houseResultsTab" class="tab">
+    <div class="controls">
+      <button onclick="resetVotes(true)">🔄 Reset House Votes</button>
+    </div>
+    <div id="houseResultsDisplay"></div>
   </div>
 </div>
 
@@ -193,14 +184,31 @@
     "ENTERTAINMENT PREFECT": ["ATIAH VIVIAN", "ABEL AYAMBILA"]
   };
 
+  const houseCategories = {
+    "ADIMAZOYA GIRLS’ HOUSE PREFECT": ["CHARITY ABANE", "NO"],
+    "BOSHERA GIRLS’ HOUSE PREFECT": ["ANITA ATIWINE", "NO"],
+    "AYAMGA GIRLS’ HOUSE PREFECT": ["BELINDA AYOK", "NO"],
+    "APASENABA GIRLS’ HOUSE PREFECT": ["PORTIA ASAAH", "NO"]
+  };
+
   let votes = JSON.parse(localStorage.getItem("electionVotes")) || {};
+  let houseVotes = JSON.parse(localStorage.getItem("houseVotes")) || {};
   let charts = [];
 
   function generateForm() {
     const form = document.getElementById("votingForm");
     form.innerHTML = "";
+    renderCategoryForm(categories, form);
+  }
 
-    for (const [position, candidates] of Object.entries(categories)) {
+  function generateHouseForm() {
+    const form = document.getElementById("houseVotingForm");
+    form.innerHTML = "";
+    renderCategoryForm(houseCategories, form);
+  }
+
+  function renderCategoryForm(categorySet, form) {
+    for (const [position, candidates] of Object.entries(categorySet)) {
       const div = document.createElement("div");
       div.classList.add("category");
 
@@ -214,7 +222,7 @@
         html += `
           <label>
             <input type="radio" name="${position}" value="${candidate}" required />
-            <div class="candidate-card" >
+            <div class="candidate-card">
               <img src="${imgSrc}" onerror="this.src='https://via.placeholder.com/120'" alt="${candidate}" />
               <div class="candidate-name">${candidate}</div>
             </div>
@@ -229,8 +237,7 @@
   }
 
   function submitVotes() {
-    const form = document.getElementById("votingForm");
-    const formData = new FormData(form);
+    const formData = new FormData(document.getElementById("votingForm"));
     for (let [position, candidate] of formData.entries()) {
       if (!votes[position]) votes[position] = {};
       if (!votes[position][candidate]) votes[position][candidate] = 0;
@@ -238,36 +245,62 @@
     }
     localStorage.setItem("electionVotes", JSON.stringify(votes));
     alert("✅ Vote submitted successfully!");
-    form.reset();
+    document.getElementById("votingForm").reset();
+  }
+
+  function submitHouseVotes() {
+    const formData = new FormData(document.getElementById("houseVotingForm"));
+    for (let [position, candidate] of formData.entries()) {
+      if (!houseVotes[position]) houseVotes[position] = {};
+      if (!houseVotes[position][candidate]) houseVotes[position][candidate] = 0;
+      houseVotes[position][candidate]++;
+    }
+    localStorage.setItem("houseVotes", JSON.stringify(houseVotes));
+    alert("✅ House vote submitted successfully!");
+    document.getElementById("houseVotingForm").reset();
   }
 
   function showTab(id) {
     document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
     document.getElementById(id).classList.add("active");
+
     if (id === 'resultsTab') showResults();
+    if (id === 'houseResultsTab') showHouseResults();
   }
 
   function promptPassword() {
     const password = prompt("Enter admin password to view results:");
-    if (password === "admin123") {
-      showTab('resultsTab');
-    } else {
-      alert("❌ Incorrect password.");
-    }
+    if (password === "admin123") showTab('resultsTab');
+    else alert("❌ Incorrect password.");
+  }
+
+  function promptHousePassword() {
+    const password = prompt("Enter admin password to view house prefect results:");
+    if (password === "admin123") showTab('houseResultsTab');
+    else alert("❌ Incorrect password.");
   }
 
   function showResults() {
-    const container = document.getElementById("resultsDisplay");
+    renderResults(votes, "resultsDisplay");
+  }
+
+  function showHouseResults() {
+    renderResults(houseVotes, "houseResultsDisplay");
+  }
+
+  function renderResults(dataSet, containerId) {
+    const container = document.getElementById(containerId);
     container.innerHTML = "";
-    charts.forEach(chart => chart.destroy());
+    charts.forEach(c => c.destroy());
     charts = [];
 
-    for (const [position, candidateVotes] of Object.entries(votes)) {
+    for (const [position, candidateVotes] of Object.entries(dataSet)) {
       const totalVotes = Object.values(candidateVotes).reduce((a, b) => a + b, 0);
       const resultBlock = document.createElement("div");
       resultBlock.innerHTML = `<h3>${position}</h3><ul>`;
       let winner = "";
       let maxVotes = 0;
+      let tie = false;
       const labels = [], data = [];
 
       for (const [candidate, count] of Object.entries(candidateVotes)) {
@@ -276,12 +309,15 @@
         if (count > maxVotes) {
           maxVotes = count;
           winner = candidate;
+          tie = false;
+        } else if (count === maxVotes) {
+          tie = true;
         }
         labels.push(candidate);
         data.push(count);
       }
 
-      resultBlock.innerHTML += `</ul><div class='winner'>🏆 Winner: ${winner}</div>`;
+      resultBlock.innerHTML += `</ul><div class="winner">🏆 Winner: ${tie ? "No clear winner (tie)" : winner}</div>`;
       const canvas = document.createElement("canvas");
       resultBlock.appendChild(canvas);
       container.appendChild(resultBlock);
@@ -305,67 +341,22 @@
     }
   }
 
-  function resetVotes() {
-    if (confirm("Are you sure you want to reset all votes?")) {
-      votes = {};
-      localStorage.removeItem("electionVotes");
-      showResults();
-    }
-  }
-
-  function exportCSV() {
-    let csv = "Portfolio,Candidate,Votes\n";
-    for (const [pos, candidates] of Object.entries(votes)) {
-      for (const [cand, count] of Object.entries(candidates)) {
-        csv += `${pos},${cand},${count}\n`;
+  function resetVotes(isHouse = false) {
+    if (confirm(`Reset ${isHouse ? 'house' : 'general'} votes?`)) {
+      if (isHouse) {
+        houseVotes = {};
+        localStorage.removeItem("houseVotes");
+        showHouseResults();
+      } else {
+        votes = {};
+        localStorage.removeItem("electionVotes");
+        showResults();
       }
     }
-    const blob = new Blob([csv], { type: "text/csv" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "election_results.csv";
-    link.click();
-  }
-
-  function exportPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text("Prefectorial Election Results", 20, 20);
-    let y = 30;
-    for (const [pos, candidates] of Object.entries(votes)) {
-      doc.text(pos, 20, y);
-      y += 8;
-      for (const [cand, count] of Object.entries(candidates)) {
-        doc.text(`- ${cand}: ${count} votes`, 30, y);
-        y += 8;
-      }
-      y += 4;
-    }
-    doc.save("election_results.pdf");
-  }
-
-  function exportWord() {
-    const doc = new window.docx.Document();
-    const children = [
-      new window.docx.Paragraph({ text: "Prefectorial Election Results", heading: window.docx.HeadingLevel.HEADING_1 })
-    ];
-    for (const [pos, candidates] of Object.entries(votes)) {
-      children.push(new window.docx.Paragraph({ text: pos, heading: window.docx.HeadingLevel.HEADING_2 }));
-      for (const [cand, count] of Object.entries(candidates)) {
-        children.push(new window.docx.Paragraph(`- ${cand}: ${count} votes`));
-      }
-    }
-    doc.addSection({ children });
-    window.docx.Packer.toBlob(doc).then(blob => {
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "election_results.docx";
-      link.click();
-    });
   }
 
   generateForm();
+  generateHouseForm();
 </script>
 
 </body>

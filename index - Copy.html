@@ -3,44 +3,170 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Prefectorial Elections</title>
+  <title>Bolga Sherigu SHS - Prefectorial Elections</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/6.2.3/docx.umd.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; margin: 0; padding: 0; }
-    .container { max-width: 900px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1, h2 { text-align: center; color: #2c3e50; }
-    .tab-buttons { text-align: center; margin-bottom: 20px; }
-    .tab-buttons button { background: #3498db; color: white; border: none; padding: 12px 24px; margin: 5px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.3s; }
-    .tab-buttons button:hover { background: #2980b9; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #2c3e50;
+      padding: 20px 0;
+      text-align: center;
+      color: white;
+    }
+    header h1 { margin: 0; font-size: 28px; }
+
+    nav {
+      background-color: #34495e;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 0;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    nav button:hover {
+      background-color: #2c3e50;
+      border-radius: 6px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
     .tab { display: none; }
     .tab.active { display: block; }
-    .category { display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ddd; }
-    .category label { margin-right: 20px; font-weight: 500; }
-    .category input[type="radio"] { margin-right: 5px; }
-    .controls { text-align: center; margin-top: 30px; }
-    .controls button { background: #27ae60; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-    .controls button:hover { background: #1e8449; }
-    canvas { max-width: 600px; margin: 20px auto; display: block; }
-    .winner { font-weight: bold; color: #27ae60; }
+
+.category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 25px 0;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+    .category strong {
+      display: block;
+      margin-bottom: 15px;
+      font-size: 18px;
+      color: #2c3e50;
+    }
+
+.candidate-list {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+
+    .candidate-card {
+      cursor: pointer;
+      text-align: center;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 10px;
+      transition: 0.3s;
+      width: 140px;
+    }
+
+    .candidate-card img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: contain;
+      border: 2px solid #ccc;
+    }
+
+    .candidate-card:hover {
+      border-color: #2980b9;
+    }
+
+    .candidate-name {
+      margin-top: 10px;
+      font-weight: 600;
+    }
+
+    input[type="radio"] {
+      display: none;
+    }
+
+    input[type="radio"]:checked + .candidate-card {
+      border-color: #3498db;
+      background: #ecf6ff;
+    }
+
+    .controls {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .controls button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .controls button:hover {
+      background: #2980b9;
+    }
+
+    canvas {
+      max-width: 600px;
+      margin: 20px auto;
+      display: block;
+    }
+
+    .winner {
+      font-weight: bold;
+      color: #27ae60;
+    }
+
     ul { list-style: none; padding-left: 0; }
-    .password-area { text-align: center; margin-bottom: 20px; }
-    input[type="password"] { padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
   </style>
 </head>
 <body>
-<div class="container">
-  <h1>Prefectorial Elections</h1>
-  <div class="tab-buttons">
-    <button onclick="showTab('voteTab')">🗳️ Vote</button>
-    <button onclick="promptPassword()">📊 View Results</button>
-  </div>
 
+<header>
+  <h1>Bolga Sherigu SHS - Prefectorial Elections</h1>
+</header>
+
+<nav>
+  <button onclick="showTab('voteTab')">🗳️ Vote</button>
+  <button onclick="promptPassword()">📊 Results</button>
+</nav>
+
+<div class="container">
   <div id="voteTab" class="tab active">
     <form id="votingForm"></form>
     <div class="controls">
-      <button onclick="submitVotes()">Submit Vote</button>
+      <button type="button" onclick="submitVotes()">✅ Submit Vote</button>
     </div>
   </div>
 
@@ -61,7 +187,7 @@
     "OFFICE & LAB PREFECT": ["ANGELINA ATIAH", "BETTY ATAMBIRE"],
     "BOYS HOUSE PREFECT": ["BLESSING ASOYIRE", "LAMBERT ADUKO"],
     "PREPS PREFECT": ["FREDA ATINSIA", "MARTHA AKAMBOE"],
-    "SANITATION PREFECT": ["MOHAAMED SUNGSUMA SHAWKIYA", "MATILDA AMOLE"],
+    "SANITATION PREFECT": ["MOHAAMED SUNGSUMA", "MATILDA AMOLE"],
     "SPORTS & HEALTH PREFECT": ["VICTORIA AYAMGA", "ADUKO DORCAS"],
     "DINING HALL PREFECT": ["VERA ASIGRE", "NO"],
     "ENTERTAINMENT PREFECT": ["ATIAH VIVIAN", "ABEL AYAMBILA"]
@@ -73,15 +199,31 @@
   function generateForm() {
     const form = document.getElementById("votingForm");
     form.innerHTML = "";
+
     for (const [position, candidates] of Object.entries(categories)) {
       const div = document.createElement("div");
       div.classList.add("category");
-      let row = `<div><strong>${position}</strong></div><div>`;
-      candidates.forEach(candidate => {
-        row += `<label><input type='radio' name='${position}' value='${candidate}' required>${candidate}</label>`;
+
+      let html = `<strong>${position}</strong><div class="candidate-list">`;
+
+      candidates.forEach((candidate, index) => {
+        const id = `${position}-${index}`;
+        const imgName = candidate.toLowerCase().replace(/\s+/g, "_");
+        const imgSrc = `images/${imgName}.jpeg`;
+
+        html += `
+          <label>
+            <input type="radio" name="${position}" value="${candidate}" required />
+            <div class="candidate-card" >
+              <img src="${imgSrc}" onerror="this.src='https://via.placeholder.com/120'" alt="${candidate}" />
+              <div class="candidate-name">${candidate}</div>
+            </div>
+          </label>
+        `;
       });
-      row += `</div>`;
-      div.innerHTML = row;
+
+      html += `</div>`;
+      div.innerHTML = html;
       form.appendChild(div);
     }
   }
@@ -95,7 +237,7 @@
       votes[position][candidate]++;
     }
     localStorage.setItem("electionVotes", JSON.stringify(votes));
-    alert("✅ Vote submitted!");
+    alert("✅ Vote submitted successfully!");
     form.reset();
   }
 
@@ -110,7 +252,7 @@
     if (password === "admin123") {
       showTab('resultsTab');
     } else {
-      alert("Incorrect password.");
+      alert("❌ Incorrect password.");
     }
   }
 
@@ -138,6 +280,7 @@
         labels.push(candidate);
         data.push(count);
       }
+
       resultBlock.innerHTML += `</ul><div class='winner'>🏆 Winner: ${winner}</div>`;
       const canvas = document.createElement("canvas");
       resultBlock.appendChild(canvas);
@@ -145,14 +288,25 @@
 
       charts.push(new Chart(canvas.getContext("2d"), {
         type: 'bar',
-        data: { labels, datasets: [{ label: 'Votes', data, backgroundColor: '#3498db' }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        data: {
+          labels,
+          datasets: [{
+            label: 'Votes',
+            data,
+            backgroundColor: '#3498db'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
       }));
     }
   }
 
   function resetVotes() {
-    if (confirm("Reset all votes?")) {
+    if (confirm("Are you sure you want to reset all votes?")) {
       votes = {};
       localStorage.removeItem("electionVotes");
       showResults();
@@ -193,8 +347,9 @@
 
   function exportWord() {
     const doc = new window.docx.Document();
-    const children = [];
-    children.push(new window.docx.Paragraph({ text: "Prefectorial Election Results", heading: window.docx.HeadingLevel.HEADING_1 }));
+    const children = [
+      new window.docx.Paragraph({ text: "Prefectorial Election Results", heading: window.docx.HeadingLevel.HEADING_1 })
+    ];
     for (const [pos, candidates] of Object.entries(votes)) {
       children.push(new window.docx.Paragraph({ text: pos, heading: window.docx.HeadingLevel.HEADING_2 }));
       for (const [cand, count] of Object.entries(candidates)) {
@@ -212,5 +367,6 @@
 
   generateForm();
 </script>
+
 </body>
 </html>
